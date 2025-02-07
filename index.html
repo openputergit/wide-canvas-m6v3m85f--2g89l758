@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRPF डेटा मॅनेजमेंट सिस्टम</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;700&display=swap');
+        * {
+            font-family: 'Mukta', sans-serif;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-blue-800 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">एसआरपीएफ</h1>
+                <div id="navButtons">
+                    <button onclick="showLogin()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">लॉगिन</button>
+                    <button onclick="showRegister()" class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">नोंदणी</button>
+                </div>
+                <button id="logoutBtn" onclick="logout()" class="hidden px-4 py-2 bg-red-600 rounded hover:bg-red-700">लॉगआउट</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto p-4">
+            <!-- Login Form -->
+            <div id="loginForm" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-center">लॉगिन</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">युजर आयडी</label>
+                        <input type="text" id="loginId" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">पासवर्ड</label>
+                        <input type="password" id="loginPassword" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">लॉगिन</button>
+                </form>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="registerForm" class="hidden max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-center">नवीन नोंदणी</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">पद</label>
+                        <input type="text" id="post" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">बक्कल नंबर</label>
+                        <input type="text" id="buckleNo" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">पूर्ण नाव</label>
+                        <input type="text" id="fullName" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">कंपनी</label>
+                        <input type="text" id="company" required class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">शासकीय निवासस्थान क्रमांक (optional)</label>
+                        <input type="text" id="residenceNo" class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">संपर्क क्रमांक</label>
+                        <input type="tel" id="contactNo" required pattern="[0-9]{10}" class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">नोंदणी करा</button>
+                </form>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Search Section -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">शोध</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="searchInput" placeholder="नाव/बक्कल नंबर/संपर्क क्रमांक" class="flex-1 px-3 py-2 border rounded">
+                            <button onclick="searchEmployee()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">शोधा</button>
+                        </div>
+                        <div id="searchResults" class="mt-4"></div>
+                    </div>
+
+                    <!-- Employee List -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">कर्मचारी यादी</h3>
+                        <div id="employeeList" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // In-memory storage for demonstration
+        let employees = [];
+        let currentUser = null;
+
+        // UI Functions
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('navButtons').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            refreshEmployeeList();
+        }
+
+        // Handle Login
+        function handleLogin(event) {
+            event.preventDefault();
+            const id = document.getElementById('loginId').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const employee = employees.find(emp => emp.id === id && emp.password === password);
+            if (employee) {
+                currentUser = employee;
+                showDashboard();
+                alert('लॉगिन यशस्वी!');
+            } else {
+                alert('अवैध क्रेडेन्शियल्स!');
+            }
+        }
+
+        // Handle Registration
+        function handleRegister(event) {
+            event.preventDefault();
+            const employee = {
+                id: 'EMP' + (employees.length + 1),
+                password: Math.random().toString(36).slice(-8),
+                post: document.getElementById('post').value,
+                buckleNo: document.getElementById('buckleNo').value,
+                fullName: document.getElementById('fullName').value,
+                company: document.getElementById('company').value,
+                residenceNo: document.getElementById('residenceNo').value,
+                contactNo: document.getElementById('contactNo').value
+            };
+            
+            employees.push(employee);
+            alert(`नोंदणी यशस्वी!\nतुमचा ID: ${employee.id}\nपासवर्ड: ${employee.password}`);
+            showLogin();
+        }
+
+        // Search Employee
+        function searchEmployee() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const results = employees.filter(emp => 
+                emp.fullName.toLowerCase().includes(searchTerm) ||
+                emp.buckleNo.toLowerCase().includes(searchTerm) ||
+                emp.contactNo.includes(searchTerm)
+            );
+            
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = results.map(emp => `
+                <div class="p-4 border rounded mb-2">
+                    <p class="font-bold">${emp.fullName}</p>
+                    <p>बक्कल नंबर: ${emp.buckleNo}</p>
+                    <p>संपर्क: ${emp.contactNo}</p>
+                </div>
+            `).join('');
+        }
+
+        // Refresh Employee List
+        function refreshEmployeeList() {
+            const listDiv = document.getElementById('employeeList');
+            listDiv.innerHTML = employees.map(emp => `
+                <div class="p-4 border rounded">
+                    <p class="font-bold">${emp.fullName}</p>
+                    <p>पद: ${emp.post}</p>
+                    <p>कंपनी: ${emp.company}</p>
+                </div>
+            `).join('');
+        }
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            showLogin();
+            document.getElementById('navButtons').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+        }
+
+        // Initial setup
+        showLogin();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
